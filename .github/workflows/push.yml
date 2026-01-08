@@ -49,7 +49,7 @@ jobs:
           CHART_VERSION="${{ needs.tag-github.outputs.version }}"
           # Remove 'v' prefix if present
           CHART_VERSION="${CHART_VERSION#v}"
-          helm push aether-roc-umbrella-${CHART_VERSION}.tgz oci://ghcr.io/${{ github.repository_owner }}/helm-charts
+          helm push aether-roc-umbrella-${CHART_VERSION}.tgz oci://ghcr.io/${{ github.repository_owner }}
 
       - name: Logout from GHCR
         if: always()
