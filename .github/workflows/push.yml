@@ -16,7 +16,7 @@ jobs:
     secrets: inherit
 
   publish-ghcr:
-    needs: tag-github
+    # needs: tag-github
     if: github.repository_owner == 'onosproject' || github.repository_owner == 'andybavier'
     runs-on: ubuntu-latest
     permissions:
