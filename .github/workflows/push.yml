@@ -17,7 +17,7 @@ jobs:
 
   publish-ghcr:
     needs: tag-github
-    if: needs.tag-github.outputs.changed == 'true'
+    if: github.repository_owner == 'onosproject' || github.repository_owner == 'andybavier'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -25,8 +25,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.tag-github.outputs.version }}
 
       - name: Install Helm
         uses: azure/setup-helm@v4
@@ -47,10 +45,9 @@ jobs:
 
       - name: Push chart to GHCR
         run: |
-          CHART_VERSION="${{ needs.tag-github.outputs.version }}"
-          # Remove 'v' prefix if present
-          CHART_VERSION="${CHART_VERSION#v}"
-          helm push aether-roc-umbrella-${CHART_VERSION}.tgz oci://ghcr.io/${{ github.repository_owner }}
+          # Convert owner name to lowercase for the registry URL
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          helm push aether-roc-umbrella-*.tgz oci://ghcr.io/$OWNER
 
       - name: Logout from GHCR
         if: always()
