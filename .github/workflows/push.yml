@@ -15,6 +15,7 @@ jobs:
     uses: onosproject/.github/.github/workflows/tag-github.yml@main
     secrets: inherit
 
+  # Publish the umbrella chart every time the chart version changes.
   publish-ghcr:
     # needs: tag-github
     if: github.repository_owner == 'onosproject' || github.repository_owner == 'andybavier'
@@ -25,25 +26,38 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2 # Needed to compare with previous commit
+
+      - name: Check for Chart version change
+        id: changed
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            chart:
+              - 'aether-roc-umbrella/Chart.yaml'
 
       - name: Install Helm
+        if: steps.changed.outputs.chart == 'true'
         uses: azure/setup-helm@v4
-        with:
-          version: 'v3.13.0'
 
       - name: Build chart dependencies
+        if: steps.changed.outputs.chart == 'true'
         run: |
           helm dep build aether-roc-umbrella
 
       - name: Package Helm chart
+        if: steps.changed.outputs.chart == 'true'
         run: |
           helm package aether-roc-umbrella
 
       - name: Login to GitHub Container Registry
+        if: steps.changed.outputs.chart == 'true'
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Push chart to GHCR
+        if: steps.changed.outputs.chart == 'true'
         run: |
           # Convert owner name to lowercase for the registry URL
           OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
