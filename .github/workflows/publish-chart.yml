@@ -1,19 +1,18 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2025 Intel Corporation
 
-name: Publish Helm Chart
+name: Publish Umbrella Helm Chart
 
 on:
   push:
     branches:
       - master
-      - publish-ghcr # For testing purposes
     paths:
       - 'aether-roc-umbrella/Chart.yaml'
 
 jobs:
   publish-ghcr:
-    if: github.repository_owner == 'onosproject' || github.repository_owner == 'andybavier'
+    if: github.repository_owner == 'onosproject'
     runs-on: ubuntu-latest
     permissions:
       contents: read
