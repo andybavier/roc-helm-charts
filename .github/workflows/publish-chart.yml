@@ -1,23 +1,18 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright 2024 Intel Corporation
+# Copyright 2025 Intel Corporation
 
-name: Tag/Publish Release
+name: Publish Helm Chart
 
 on:
   push:
     branches:
       - master
       - publish-ghcr # For testing purposes
+    paths:
+      - 'aether-roc-umbrella/Chart.yaml'
 
 jobs:
-  # CAUTION: Other actions depend on this name "tag-github"
-  tag-github:
-    uses: onosproject/.github/.github/workflows/tag-github.yml@main
-    secrets: inherit
-
-  # Publish the umbrella chart every time the chart version changes.
   publish-ghcr:
-    # needs: tag-github
     if: github.repository_owner == 'onosproject' || github.repository_owner == 'andybavier'
     runs-on: ubuntu-latest
     permissions:
@@ -26,38 +21,23 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 2 # Needed to compare with previous commit
-
-      - name: Check for Chart version change
-        id: changed
-        uses: dorny/paths-filter@v3
-        with:
-          filters: |
-            chart:
-              - 'aether-roc-umbrella/Chart.yaml'
 
       - name: Install Helm
-        if: steps.changed.outputs.chart == 'true'
         uses: azure/setup-helm@v4
 
       - name: Build chart dependencies
-        if: steps.changed.outputs.chart == 'true'
         run: |
           helm dep build aether-roc-umbrella
 
       - name: Package Helm chart
-        if: steps.changed.outputs.chart == 'true'
         run: |
           helm package aether-roc-umbrella
 
       - name: Login to GitHub Container Registry
-        if: steps.changed.outputs.chart == 'true'
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Push chart to GHCR
-        if: steps.changed.outputs.chart == 'true'
         run: |
           # Convert owner name to lowercase for the registry URL
           OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
@@ -67,11 +47,3 @@ jobs:
         if: always()
         run: |
           helm registry logout ghcr.io
-
-  update-version:
-    needs: tag-github
-    if: needs.tag-github.outputs.changed == 'true'
-    uses: onosproject/.github/.github/workflows/bump-version.yml@main
-    secrets: inherit
-    with:
-      version: ${{ needs.tag-github.outputs.version }}
