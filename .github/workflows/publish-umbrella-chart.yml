@@ -1,0 +1,20 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2025 Intel Corporation
+
+name: Publish Chart on Changes
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'aether-roc-umbrella/Chart.yaml'
+
+jobs:
+  publish:
+    uses: ./.github/workflows/publish-chart-to-ghcr.yml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      chart_path: 'aether-roc-umbrella'

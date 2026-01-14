@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright 2025 Intel Corporation
 
-name: Publish Umbrella Helm Chart
+name: Publish Helm Chart to GitHub OCI Registry
 
 on:
-  push:
-    branches:
-      - master
-    paths:
-      - 'aether-roc-umbrella/Chart.yaml'
+  workflow_call:
+    inputs:
+      chart_path:
+        description: 'Path to the Helm chart directory to publish'
+        required: true
+        type: string
 
 jobs:
   publish-ghcr:
@@ -25,11 +25,11 @@ jobs:
 
       - name: Build chart dependencies
         run: |
-          helm dep build aether-roc-umbrella
+          helm dep build ${{ inputs.chart_path }}
 
       - name: Package Helm chart
         run: |
-          helm package aether-roc-umbrella
+          helm package ${{ inputs.chart_path }}
 
       - name: Login to GitHub Container Registry
         run: |
@@ -39,7 +39,8 @@ jobs:
         run: |
           # Convert owner name to lowercase for the registry URL
           OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          helm push aether-roc-umbrella-*.tgz oci://ghcr.io/$OWNER
+          CHART_NAME=$(basename ${{ inputs.chart_path }})
+          helm push ${CHART_NAME}-*.tgz oci://ghcr.io/$OWNER
 
       - name: Logout from GHCR
         if: always()
